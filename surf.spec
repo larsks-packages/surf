@@ -1,6 +1,6 @@
 Name:           surf
-Version:        0.6
-Release:        5%{?dist}
+Version:        0.7
+Release:        1%{?dist}
 Summary:        Simple web browser
 License:        MIT
 URL:            http://surf.suckless.org/
@@ -14,7 +14,7 @@ Requires:       dmenu
 Requires:       xorg-x11-utils
 # https://bugzilla.redhat.com/show_bug.cgi?id=884296
 Requires:       xterm
-Requires:       wget
+#Requires:       wget
 # Appdata file needed later.
 
 %description
@@ -23,25 +23,11 @@ surf is a simple web browser based on WebKit/GTK+.
 %prep
 %setup -q
 
-# Thanks to Robert Scheck for the DSO-patch
-# https://bugzilla.redhat.com/attachment.cgi?id=402128
-# I decided to include this in the sed chain below
-
-sed \
-  -e 's|/usr/local|%{_prefix}|g' \
-  -e 's|/usr/include|%{_includedir}|g' \
-  -e 's|-s ${LIBS}|-g ${LIBS}|g' \
-  -e 's|-std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}|-std=c99 %{optflags} ${INCS} ${CPPFLAGS}|g' \
-  -e 's|LIBS = -L/usr/lib -lc ${GTKLIB} -lgthread-2.0|LIBS = -L%{_libdir} -lc ${GTKLIB} -lgthread-2.0 -lX11|g' \
-  -i config.mk
-
-sed -i 's!^\(\t\+\)@!\1!' Makefile
-
 %build
-make %{?_smp_mflags}
+make PREFIX="%{_prefix}"
 
 %install
-make install INSTALL="install -p" DESTDIR=%{buildroot}
+make install INSTALL="install -p" DESTDIR=%{buildroot} PREFIX="%{_prefix}"
 
 desktop-file-install %{S:1} --dir=%{buildroot}%{_datadir}/applications/
 
@@ -56,6 +42,10 @@ install -pm0644 %{S:2} %{buildroot}%{_datadir}/pixmaps/
 %{_datadir}/pixmaps/%{name}.svg
 
 %changelog
+* Sat Feb 06 2016 Lars Kellogg-Stedman <lars@redhat.com> - 0.7-1
+- New upstream release
+- Patching with sed is a terrible idea
+
 * Fri Jun 19 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.6-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
 
